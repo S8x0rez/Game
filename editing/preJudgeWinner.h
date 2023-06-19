@@ -10,13 +10,12 @@
 #include <vector>
 
 using namespace std;
+#define uint unsigned int
 
 struct node_t{
 	vector<int>  board;
 	pair<int, int> sumMoveDistance;
-	int *left = NULL;
-	int * center = NULL;
-	int *right = NULL;
+	uint next[3] = {NULL, NULL, NULL};
 };
 
 class GameBoard
@@ -34,7 +33,9 @@ class GameBoard
 		void setBoard(void);
 		void getNumber(void);
 		void printBoard(void);
-		node_t* movePieace(node_t *,int &, int);
+		bool movePieace(node_t, node_t *, int &, int);
+		void makeNode(node_t *);
+		void addNode(node_t *, node_t *, int);
 		void makeAllNode(void);
-		void judgeWinner(node_t *);
+		bool judgeWinner(node_t);
 };
