@@ -17,7 +17,7 @@ struct node_t{
 	pair<int, int> sumMoveDistance;
 	uint next[3] = {NULL, NULL, NULL};
 };
-
+//  aaa
 class GameBoard
 {
 		int turn;
