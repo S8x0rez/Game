@@ -1,95 +1,118 @@
-#include "preJudgeWinner.h"
+#include "main.h"
 
-GameBoard::GameBoard(void){
-	turn = 0;
+GameBoard::GameBoard(void) {
 	row = 1;
-	num = 0;
-	GoalDistance = row * 18;
-	setBoard();
 }
 
-GameBoard::~GameBoard(){}
+GameBoard::~GameBoard() {}
 
-void GameBoard::setBoard(){
+void GameBoard::setBoard() {
 	node_t setBoard;
-	setBoard.board = {1,1,1,0,0,0,2,2,2};
-	setBoard.sumMoveDistance.first = 0;
-	setBoard.sumMoveDistance.second = 0;
-	tree.push_back(&setBoard);
-}
-void GameBoard::getNumber(){ //GameBoard()後に予期せぬ値に更新されているため修正用
-	tree[0]->board[0] = 1;
-	tree[0]->board[1] = 1;
+	setBoard.turn = 0;
+	cin >> setBoard.board;
+	setBoard.sumMoveDistance.first = false;
+	setBoard.sumMoveDistance.second = false;
+	tree.push_back(setBoard);
 }
 
-void GameBoard::printBoard(void){
-	for(int i = 0;i < 9; i++){
-		cout << tree[0]->board[i] << ' ';
+
+void GameBoard::printBoard(void) {
+	cout << tree.size() << endl;
+	for (int i = 0; i < tree.size(); i++) {
+		cout << i << ':' << tree[i].board <<  ".....";
+		for (int j = 0; j < tree[i].next.size(); j++) {
+			cout << tree[i].next[j] << '=' << tree[tree[i].next[j]].board << ':';
+		}
+		cout << endl;
 	}
-	cout << endl;
 }
 
-bool GameBoard::movePieace(node_t node, node_t *nextNode, int &turn, int posi){
-	*nextNode = node;
-	turn++;
-
-	if(turn % 2 == 1){
-		if(node.board[posi] == 1){
-			for(int i = posi + 1; i < node.board.size();i++){
-				if(node.board[i] == 0){
-					num++;
-					iter_swap(nextNode->board.begin()+posi, nextNode->board.begin()+i);
-					nextNode->sumMoveDistance.first += i-posi;
+bool GameBoard::movePieace(int itr, node_t* nextNode, int turn, int posi) {
+	if (turn % 2 == 0) {
+		if (tree[itr].board[posi] == '1' && posi < 6) {
+			for (int i = posi + 1; i < tree[itr].board.size(); i++) {
+				if (tree[itr].board[i] == '-') {
+					char tmp = nextNode->board[i];
+					nextNode->board[i] = nextNode->board[posi];
+					nextNode->board[posi] = tmp;
+					bool flag = judgeWinner(nextNode);
 					return true;
 				}
-				//else if(i == node->board.size()-1) turn--;
 			}
 		}
 	}
-	else{
-		if(node.board[posi] == 2){
-			for(int i = posi - 1; i >= 0;i--){
-				if(node.board[i] == 0){
-					iter_swap(nextNode->board.begin()+posi, nextNode->board.begin()+i);
-					nextNode->sumMoveDistance.second += posi - i;
+	else {
+		if (tree[itr].board[posi] == '2' && posi > 2) {
+			for (int i = posi - 1; i >= 0; i--) {
+				if (tree[itr].board[i] == '-') {
+					char tmp = nextNode->board[i];
+					nextNode->board[i] = nextNode->board[posi];
+					nextNode->board[posi] = tmp;
+					bool flag = judgeWinner(nextNode);
 					return true;
 				}
-				//else if(i == 0) turn--;
 			}
 		}
 	}
 
-	return &nextNode;
+	return false;
 }
 
-void GameBoard::addNode(node_t *node, node_t *nextNode, int posi){
-		tree.push_back(nextNode);
-		node->next[posi] = tree.size() - 1;
+void GameBoard::addNode(int itr, node_t nextNode, int posi) {
+	// 重複を判定
+	for (int i = 0; i < tree[itr].next.size(); i++) {
+		if (nextNode.board == tree[tree[itr].next[i]].board) return;
+	}
+
+	nextNode.turn++;
+	tree.push_back(nextNode);
+	tree[itr].next.push_back(tree.size() - 1);
+
+	// if (nextNode.sumMoveDistance.first)cout << "user1 win" << endl;
+	// if (nextNode.sumMoveDistance.second)cout << "user2 win" << endl;
 }
 
-void GameBoard::makeNode(node_t *node){
-	node_t *nextNode;
-	bool opt;
-
-	for(int i = 0;i < 3;i++){
+void GameBoard::makeNode(int itr) {
+	node_t nextNode;
+	for (int i = 0; i < 3; i++) {
 		int j = 0;
-		for(int k = 0;k < 9;k++){
-			if(turn % 2 == 1){
-				if(node->board[k] == 1){
-					if(i == j){
-						opt = movePieace(*node, nextNode, turn, k);
-						addNode(node, nextNode, i);
-						break;
+		for (int k = 0; k < 9; k++) {
+			if (tree[itr].turn % 2 == 0) {
+				if (tree[itr].board[k] == '1') {
+					if (i == j) {
+						nextNode = tree[itr];
+						nextNode.next.clear();
+						if (movePieace(itr, &nextNode, tree[itr].turn, k)) {
+							cout << tree[itr].board << ":" << nextNode.board << endl;
+							addNode(itr, nextNode, i);
+							break;
+						}
+						else if (i == 2 && k == 8 && tree[itr].next.size() == 0) {
+							nextNode.turn++;
+							tree.push_back(nextNode);
+							tree[itr].next.push_back(tree.size() - 1);
+							return;
+						}
 					}
 					else j++;
 				}
 			}
-			else if(turn % 2 == 0){
-				if(node->board[8-k] == 2){
-					if(i == j){
-						opt = movePieace(*node, nextNode, turn, 8-k);
-						addNode(node, nextNode, i);
-						break;
+			else {
+				if (tree[itr].board[8 - k] == '2') {
+					if (i == j) {
+						nextNode = tree[itr];
+						nextNode.next.clear();
+						if (movePieace(itr, &nextNode, tree[itr].turn, 8 - k)) {
+							cout << tree[itr].board << ":" << nextNode.board << endl;
+							addNode(itr, nextNode, i);
+							break;
+						}
+						else if (i == 2 && k == 8 && tree[itr].next.size() == 0) {
+							nextNode.turn++;
+							tree.push_back(nextNode);
+							tree[itr].next.push_back(tree.size() - 1);
+							return;
+						}
 					}
 					else j++;
 				}
@@ -98,50 +121,41 @@ void GameBoard::makeNode(node_t *node){
 	}
 }
 
-void GameBoard::makeAllNode(){
-	node_t *node;
-	vector<node_t *> way{tree[0]};
+void GameBoard::makeTree() {
+	node_t node;
+	vector<node_t> way{ tree[0] };
 
-	while(1){
-		node = way[way.size() - 1];
-		makeNode(node);
-		// 再帰関数
-
-		if(!judgeWinner(*node)) break;
+	int i = 0;
+	while (i < tree.size()) {
+		node = tree[i];
+		if (judgeWinner(&node)) {
+			i++;
+			continue;
+		}
+		makeNode(i);
+		i++;
 	}
+	
 }
 
 
-bool GameBoard::judgeWinner(node_t node){
-	if(node.sumMoveDistance.first == GoalDistance) cout << "1 win" << endl;
-	if(node.sumMoveDistance.second == GoalDistance) cout << "2 win" << endl;
+bool GameBoard::judgeWinner(node_t *node) {
+	if (node->board[6] == '1' && node->board[7] == '1' && node->board[8] == '1') {
+		node->sumMoveDistance.first = true;
+	}
+	if (node->board[0] == '2' && node->board[1] == '2' && node->board[2] == '2') {
+		node->sumMoveDistance.second = true;
+	}
 	// どちらかの移動距離の合計が18*rowになったらtrue
-	return (node.sumMoveDistance.first == GoalDistance || node.sumMoveDistance.second == GoalDistance)? true: false;
+	return (node->sumMoveDistance.first || node->sumMoveDistance.second) ? true : false;
 }
 
-/*void GameBoard::movePieace(){
-	while(oneSumMoveDistance < GoalDistance && twoSumMoveDistance < GoalDistance){
-		turn++;
-
-		for(int j = 0;j < 3;j++){
-			
-		}
-	}
-
-	return;
-}*/
-  
-
-
-int GameBoard::Size(){
-	return tree.size();
-}
-
-int main(){
+int main() {
 	GameBoard Game;
-	Game.getNumber();
-
-
+	Game.setBoard();
+	Game.makeTree();
+	Game.printBoard();
+	
 
 	return 0;
 }
