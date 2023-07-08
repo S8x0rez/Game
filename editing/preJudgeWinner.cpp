@@ -1,4 +1,4 @@
-#include "main.h"
+#include "header.h"
 
 GameBoard::GameBoard(void) {
 	row = 1;
@@ -10,8 +10,8 @@ void GameBoard::setBoard() {
 	node_t setBoard;
 	setBoard.turn = 0;
 	cin >> setBoard.board;
-	setBoard.sumMoveDistance.first = false;
-	setBoard.sumMoveDistance.second = false;
+	setBoard.winState.first = false;
+	setBoard.winState.second = false;
 	tree.push_back(setBoard);
 }
 
@@ -20,8 +20,14 @@ void GameBoard::printBoard(void) {
 	cout << tree.size() << endl;
 	for (int i = 0; i < tree.size(); i++) {
 		cout << i << ':' << tree[i].board <<  ".....";
-		for (int j = 0; j < tree[i].next.size(); j++) {
-			cout << tree[i].next[j] << '=' << tree[tree[i].next[j]].board << ':';
+		if(tree[i].next.size() == 0){
+			if(tree[i].winState.first) cout << "player1 won";
+			else cout << "player2 won";
+		}
+		else{
+			for (int j = 0; j < tree[i].next.size(); j++) {
+				cout << tree[i].next[j] << "=>" << tree[tree[i].next[j]].board << ':';
+			}
 		}
 		cout << endl;
 	}
@@ -68,8 +74,8 @@ void GameBoard::addNode(int itr, node_t nextNode, int posi) {
 	tree.push_back(nextNode);
 	tree[itr].next.push_back(tree.size() - 1);
 
-	// if (nextNode.sumMoveDistance.first)cout << "user1 win" << endl;
-	// if (nextNode.sumMoveDistance.second)cout << "user2 win" << endl;
+	// if (nextNode.winState.first)cout << "user1 win" << endl;
+	// if (nextNode.winState.second)cout << "user2 win" << endl;
 }
 
 void GameBoard::makeNode(int itr) {
@@ -141,13 +147,13 @@ void GameBoard::makeTree() {
 
 bool GameBoard::judgeWinner(node_t *node) {
 	if (node->board[6] == '1' && node->board[7] == '1' && node->board[8] == '1') {
-		node->sumMoveDistance.first = true;
+		node->winState.first = true;
 	}
 	if (node->board[0] == '2' && node->board[1] == '2' && node->board[2] == '2') {
-		node->sumMoveDistance.second = true;
+		node->winState.second = true;
 	}
-	// どちらかの移動距離の合計が18*rowになったらtrue
-	return (node->sumMoveDistance.first || node->sumMoveDistance.second) ? true : false;
+
+	return (node->winState.first || node->winState.second) ? true : false;
 }
 
 int main() {

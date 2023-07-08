@@ -15,7 +15,7 @@ using namespace std;
 struct node_t{
 	int turn;
 	std::string  board;
-	pair<bool, bool> sumMoveDistance;
+	pair<bool, bool> winState;
 	vector<int> next;
 };
 
